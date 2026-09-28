@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Diario Macro</title>
+<meta name="theme-color" content="#EFF2EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111510" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Macro">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+/* Layout: colonna unica mobile-first, barra tab in basso; Oggi = sintesi → input veloce → pasti */
+:root{
+  --bg:#EFF2EC; --surface:#FFFFFF; --sunk:#E4E9E0; --ink:#172015; --muted:#5A6757; --line:#D6DDD1;
+  --accent:#2E6A38; --accent-ink:#FFFFFF; --accent-soft:#DCEBD9;
+  --p:#2C68A8; --c:#B97D12; --f:#8B3C7B; --warn:#B0501A; --warn-soft:#F6E2D5;
+  --display:ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  --body:-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+  --mono:ui-monospace, "SF Mono", Menlo, monospace;
+  --r:14px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111510; --surface:#1A2019; --sunk:#232B21; --ink:#E5EBE1; --muted:#98A594; --line:#2D362A;
+  --accent:#86C67F; --accent-ink:#0D140C; --accent-soft:#233322;
+  --p:#86B4E8; --c:#E7B64F; --f:#D690C7; --warn:#EE9460; --warn-soft:#3A2519; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding-top:env(safe-area-inset-top,0px)}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:6px 120px;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.12rem}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:.82rem}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.5rem .8rem;touch-action:manipulation}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button.danger{color:var(--warn);border-color:var(--warn)}
+button:disabled{opacity:.45;cursor:default}
+input,textarea,select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.5rem .65rem;width:100%;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between} .grow{flex:1;min-width:0}
+[hidden]{display:none!important}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:8px}
+.brand{font-family:var(--display);font-size:1.3rem;font-weight:700}
+.brand span{color:var(--accent)}
+.datenav{display:flex;align-items:center;gap:4px}
+.datenav button{padding:.35rem .7rem}
+.datenav .d{font-weight:600;min-width:7.5em;text-align:center}
+.net{font-size:.7rem;padding:.1rem .45rem;border-radius:99px;background:var(--sunk);color:var(--muted)}
+
+.sum{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{position:relative;width:124px;height:124px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ring .big{font-family:var(--display);font-size:1.65rem;font-weight:700;line-height:1}
+.bars{display:flex;flex-direction:column;gap:9px;min-width:0}
+.bar .t{display:flex;justify-content:space-between;font-size:.85rem;gap:6px}
+.track{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden;margin-top:3px}
+.fill{height:100%;border-radius:99px}
+.over{color:var(--warn)}
+@media (max-width:380px){.sum{grid-template-columns:1fr;justify-items:center}.bars{width:100%}}
+
+.quick{display:flex;gap:8px;align-items:flex-end}
+.quick textarea{min-height:48px;max-height:140px;resize:none}
+.iconbtn{width:48px;height:48px;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
+.iconbtn svg{width:22px;height:22px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:99px;padding:.32rem .75rem;font-size:.86rem;background:var(--sunk);border:1px solid transparent}
+.chip.on{background:var(--accent-soft);border-color:var(--accent)}
+.pill{display:inline-block;font-size:.68rem;padding:.08rem .45rem;border-radius:99px;background:var(--sunk);color:var(--muted);font-weight:600;vertical-align:middle}
+.pill.est{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+
+.items{display:flex;flex-direction:column}
+.it{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:9px 0;border-top:1px solid var(--line);align-items:center}
+.it:first-child{border-top:0}
+.it .nm{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.it .mac{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.it .k{font-family:var(--mono);font-size:.92rem;text-align:right}
+.it.click{cursor:pointer}
+.it.bad .nm{color:var(--warn)}
+.gin{width:5.4em;text-align:right;font-family:var(--mono)}
+.sel{width:auto;max-width:100%;font-size:15px;padding:.3rem .4rem}
+.meal h3{font-size:1rem;display:flex;justify-content:space-between;align-items:baseline;text-transform:capitalize}
+.edit{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:6px}
+.micro{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px}
+.micro .bar .t{font-size:.8rem}
+.opt{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.delta{font-size:.8rem;font-family:var(--mono)}
+.food{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.food:first-child{border-top:0}
+.food .sub{font-size:.78rem;color:var(--muted);grid-column:1/-1}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.grid2 label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--muted)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:170px;position:relative}
+.wk{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.wk .b{width:100%;max-width:40px;background:var(--accent);border-radius:6px 6px 2px 2px;min-height:2px}
+.wk .b.o{background:var(--warn)}
+.wk .l{font-size:.72rem;color:var(--muted)} .wk .v{font-size:.68rem;font-family:var(--mono)}
+.tline{position:absolute;left:0;right:0;border-top:1.5px dashed var(--muted);opacity:.6}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+td:first-child,th:first-child{text-align:left}
+.veil{position:fixed;inset:0;background:rgba(10,14,9,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+#reader{width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:220px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:10}
+.tabs .in{display:flex;max-width:720px;width:100%}
+.tabs button{flex:1;border:0;border-radius:0;background:transparent;padding:.6rem .2rem;font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-selected="true"]{color:var(--accent);font-weight:600}
+.banner{background:var(--warn-soft);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.55rem 1rem;border-radius:99px;font-size:.88rem;z-index:30;max-width:90%;text-align:center}
+.empty{color:var(--muted);font-size:.9rem;padding:4px 0}
+.hint{font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Diario <span>Macro</span></div>
+    <div class="datenav" id="datenav">
+      <button id="prevDay" aria-label="Giorno precedente">‹</button>
+      <div class="d" id="dateLabel">Oggi</div>
+      <button id="nextDay" aria-label="Giorno successivo">›</button>
+    </div>
+  </header>
+
+  <!-- OGGI -->
+  <section id="p-oggi" class="wrap" style="padding:0;gap:14px">
+    <div id="summary"></div>
+    <div class="card">
+      <div class="row between"><h2>Aggiungi</h2><span class="net" id="net">offline</span></div>
+      <div class="quick">
+        <button class="iconbtn" id="scanBtn" aria-label="Scansiona codice a barre" title="Scansiona EAN">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8"/></svg></button>
+        <textarea id="q" rows="1" placeholder="80 g pasta, 1 banana, 2 uova" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+        <button class="primary iconbtn" id="logBtn" aria-label="Registra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      </div>
+      <div class="chips" id="mealChips"></div>
+      <div id="preview"></div>
+      <div id="recent"></div>
+    </div>
+    <div id="meals"></div>
+    <div id="combo"></div>
+    <div id="micro"></div>
+  </section>
+
+  <!-- ARCHIVIO -->
+  <section id="p-archivio" hidden>
+    <div class="card">
+      <div class="row between"><h2>Archivio alimenti</h2><div class="row"><button id="scanBtn2">Scansiona</button><button class="primary" id="newFood">Nuovo</button></div></div>
+      <input id="fq" type="search" placeholder="Cerca per nome, marca, EAN o soprannome" autocomplete="off">
+      <div class="hint" id="fcount"></div>
+      <div id="flist"></div>
+    </div>
+  </section>
+
+  <!-- SETTIMANA -->
+  <section id="p-settimana" hidden><div id="weekv"></div></section>
+
+  <!-- OBIETTIVI -->
+  <section id="p-obiettivi" hidden><div id="goalsv" class="wrap" style="padding:0;gap:14px"></div></section>
+</div>
+
+<nav class="tabs"><div class="in" role="tablist">
+  <button role="tab" data-tab="oggi" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Oggi</button>
+  <button role="tab" data-tab="archivio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Archivio</button>
+  <button role="tab" data-tab="settimana" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Settimana</button>
+  <button role="tab" data-tab="obiettivi" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Obiettivi</button>
+</div></nav>
+
+<script src="seed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
