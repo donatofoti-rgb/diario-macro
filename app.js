@@ -276,7 +276,7 @@ async function handleEan(ean){ean=String(ean).replace(/\D/g,'');const local=food
 
 // ================= scanner (ZXing WebAssembly) =================
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.append(s)})}
-let zxP=null;function zxing(){if(!zxP)zxP=loadScript('vendor/zxing-reader.js').then(()=>{ZXingWASM.prepareZXingModule({overrides:{locateFile:(p,pre)=>p.endsWith('.wasm')?new URL('vendor/zxing_reader.wasm',location.href).href:pre+p}});return ZXingWASM});return zxP}
+let zxP=null;function zxing(){if(!zxP)zxP=loadScript('zxing-reader.js').then(()=>{ZXingWASM.prepareZXingModule({overrides:{locateFile:(p,pre)=>p.endsWith('.wasm')?new URL('zxing_reader.wasm',location.href).href:pre+p}});return ZXingWASM});return zxP}
 const RO={formats:['EAN13','EAN8','UPCA','UPCE'],tryHarder:true,maxNumberOfSymbols:1};
 function eanOk(c){if(!/^\d{8}$|^\d{12,13}$/.test(c))return false;const d=c.split('').map(Number);const chk=d.pop();const s=d.reverse().reduce((a,x,i)=>a+x*(i%2===0?3:1),0);return (10-s%10)%10===chk}
 async function openScanner(){let stream=null,stop=false,busy=false;
