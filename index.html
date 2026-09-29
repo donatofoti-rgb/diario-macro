@@ -122,6 +122,27 @@ td:first-child,th:first-child{text-align:left}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.55rem 1rem;border-radius:99px;font-size:.88rem;z-index:30;max-width:90%;text-align:center}
 .empty{color:var(--muted);font-size:.9rem;padding:4px 0}
 .hint{font-size:.8rem;color:var(--muted)}
+.search{position:relative}
+.search input{padding-right:2.2rem;height:48px}
+.search .clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:.2rem .6rem;font-size:1.3rem}
+.reslist{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.res{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;padding:.65rem .75rem;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.res .rn{font-weight:600;min-width:0;overflow-wrap:anywhere}.res .rk{font-size:.88rem}.res .rm{grid-column:1/-1;font-size:.76rem;color:var(--muted)}
+.res:active{background:var(--accent-soft)}
+.qty{gap:12px}
+.gbox{display:grid;grid-template-columns:64px 1fr 64px;gap:10px;align-items:center}
+.step{height:64px;font-size:2rem;font-weight:600;border-radius:16px;background:var(--surface)}
+.gval{display:flex;align-items:baseline;justify-content:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:16px;height:64px;padding:0 10px}
+.gval input{border:0;background:transparent;font-family:var(--display);font-size:2.2rem;font-weight:700;text-align:center;width:100%;padding:0;height:62px}
+.gval span{font-size:1.1rem;color:var(--muted)}
+.qmac{text-align:center;font-size:.95rem}
+.pad{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.pad button{height:46px;font-weight:600;font-variant-numeric:tabular-nums;border-radius:12px}
+.pad.small4{grid-template-columns:repeat(4,1fr)}
+.pad.small4 button{height:40px;color:var(--muted);font-weight:500}
+button.big{height:54px;font-size:1.08rem}
+.qfoot{position:sticky;bottom:calc(-24px - env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));margin-bottom:calc(-24px - env(safe-area-inset-bottom,0px))}
+
 </style>
 </head>
 <body>
@@ -143,11 +164,11 @@ td:first-child,th:first-child{text-align:left}
       <div class="quick">
         <button class="iconbtn" id="scanBtn" aria-label="Scansiona codice a barre" title="Scansiona EAN">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8"/></svg></button>
-        <textarea id="q" rows="1" placeholder="80 g pasta, 1 banana, 2 uova" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-        <button class="primary iconbtn" id="logBtn" aria-label="Registra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+        <div class="search grow"><input id="q" type="search" enterkeyhint="search" placeholder="Cerca: pasta, yogurt, pollo…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <button class="ghost clear" id="clearQ" aria-label="Cancella">×</button></div>
+        <button class="primary iconbtn" id="logBtn" aria-label="Registra tutto" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
       </div>
-      <div class="chips" id="mealChips"></div>
-      <div id="preview"></div>
+      <div id="results"></div>
       <div id="recent"></div>
     </div>
     <div id="meals"></div>
