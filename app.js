@@ -174,18 +174,15 @@ function healthBlock(t){const h=H(),b=h.burn[S.date],p=h.pending;let out='';
   if(b){const spent=b.active+b.rest,bal=t.kcal-spent;
     out+=`<div class="row between small"><span class="muted">Spese <span class="num">${fmt(spent)}</span> kcal · ${fmt(b.active)} attive + ${fmt(b.rest)} a riposo (ore ${esc(b.at)})</span>
       <span class="num"><b>${bal>=0?'Surplus':'Deficit'} ${fmt(Math.abs(bal))}</b></span></div>`}
-  out+=`<div class="row"><button data-act="hsync">Sincronizza con Salute</button>${p?`<button class="primary" data-act="hpaste">Incolla da Salute</button>`:''}<button class="ghost small" data-act="hburn">kcal spese a mano</button></div>`;
-  if(p)out+=`<div class="hint">Dopo il Comando Rapido torna qui e tocca «Incolla da Salute»: conferma l'invio e legge le calorie spese.</div>`;
+  out+=`<div class="row"><button data-act="hsync">Sincronizza con Salute</button><button class="ghost small" data-act="hburn">kcal spese a mano</button></div>`;
   return out}
-function syncHealth(){const h=H(),t=totals(entries()),s=h.sent[S.date]||{};const d={};let neg=false,any=false;
-  HK.forEach(k=>{const v=t[k]-(s[k]||0);const r=k==='kcal'?Math.round(v):Math.round(v*10)/10;d[k]=Math.max(0,r);if(r<0)neg=true;if(r>0)any=true});
-  const id=uid();const when=S.date===todayStr()?localISO(new Date()):S.date+'T21:00:00';
-  const go=()=>{h.pending={id,date:S.date,totals:Object.fromEntries(HK.map(k=>[k,Math.max(t[k],s[k]||0)])),ts:Date.now()};saveNow();renderSummary();
-    location.href='shortcuts://run-shortcut?name='+encodeURIComponent(scName())+'&input=text&text='+encodeURIComponent(JSON.stringify({id,when,log:any?1:0,...d}))};
-  if(!neg){go();return}
-  const v=sheet(`<h2>Hai tolto alimenti</h2><p class="small">Dopo l'ultimo invio il totale di questo giorno è sceso. Da qui non posso togliere dati da Salute: se vuoi i numeri esatti, cancella a mano i campioni in Salute → Nutrizione. Ora invio solo gli aumenti.</p>
-    <button class="primary" data-x="go">Continua</button><button class="ghost" data-x="close">Annulla</button>`);
-  v.addEventListener('click',ev=>{const x=ev.target.closest('[data-x]')?.dataset.x;if(!x&&ev.target!==v)return;v.remove();if(x==='go')go()})}
+function syncHealth(){if(S.date!==todayStr()){toast('Si invia solo la giornata di oggi');return}
+  const h=H(),t=totals(entries()),s=h.sent[S.date]||{};const d=Math.round(t.kcal-(s.kcal||0));
+  if(d<0){const v=sheet(`<h2>Hai tolto alimenti</h2><p class="small">Dopo l'ultimo invio il totale di oggi è sceso di ${fmt(-d)} kcal. Da qui non posso togliere dati da Salute: se vuoi il numero esatto, cancella a mano l'ultima voce in Salute → Nutrizione → Apporto calorico.</p><button class="primary" data-x="close">Ok</button>`);
+    v.addEventListener('click',ev=>{if(ev.target===v||ev.target.closest('[data-x]'))v.remove()});return}
+  if(d===0){toast('Niente di nuovo da inviare');return}
+  h.sent[S.date]={...s,kcal:t.kcal};saveNow();renderSummary();toast(`Invio ${fmt(d)} kcal a Salute`);
+  location.href='shortcuts://run-shortcut?name='+encodeURIComponent(scName())+'&input=text&text='+d}
 async function pasteHealth(){let txt='';try{txt=await navigator.clipboard.readText()}catch(e){toast('Non riesco a leggere gli appunti');return}
   const m=String(txt).match(/DMSYNC\|([^|\n]*)\|([^|\n]*)\|([^|\n]*)(?:\|([^|\n]*))?(?:\|([^|\n]*))?/);if(!m){toast('Negli appunti non ci sono dati di Salute');return}
   const h=H(),[,id,a,r,hv,wt]=m,p=h.pending;const w=pnum(wt);if(w>=30&&w<=250){D.weights=D.weights||{};D.weights[todayStr()]=Math.round(w*10)/10}
@@ -453,8 +450,8 @@ function renderProfile(){const t=T(),c=D.settings?.calc||{peso:'',altezza:'',eta
     <label class="ck small"><input type="checkbox" id="tr_on" ${c.on?'checked':''}> Obiettivo diverso nei giorni di allenamento</label>
     <div class="grid2"><label>Allenamento: kcal in più<input id="tr_plus" inputmode="numeric" value="${c.plus}"></label><label>Riposo: kcal in meno<input id="tr_minus" inputmode="numeric" value="${c.minus}"></label></div>
     <button data-act="saveTr">Salva</button>
-    <div class="label">Giorni fissi (se non usi Hevy)</div><div class="wdrow">${WD.map((l,i)=>`<button class="chip ${c.days.includes(i)?'on':''}" data-act="trday" data-i="${i}" aria-label="giorno ${i+1}">${l}</button>`).join('')}</div>
-    <div class="hint">La differenza va tutta sui carboidrati. Per decidere se è un giorno di allenamento conta prima la tua scelta su Oggi, poi Hevy (lo legge «Sincronizza con Salute»), poi questi giorni fissi.</div>`})()}</section>
+    <div class="label">Giorni fissi</div><div class="wdrow">${WD.map((l,i)=>`<button class="chip ${c.days.includes(i)?'on':''}" data-act="trday" data-i="${i}" aria-label="giorno ${i+1}">${l}</button>`).join('')}</div>
+    <div class="hint">La differenza va tutta sui carboidrati. Per decidere se è un giorno di allenamento conta la tua scelta su Oggi; se non scegli, valgono questi giorni fissi.</div>`})()}</section>
    <section class="card"><h2>Peso</h2>
     <div class="row"><input id="w_kg" inputmode="decimal" placeholder="kg" value="${esc(D.weights?.[todayStr()]??'')}" style="width:110px"><button class="primary" data-act="saveW">Salva peso di oggi</button></div>
     ${wSpark()}<div class="hint">Pesati al mattino, a digiuno, 3–4 volte a settimana. Conta l'andamento, non il singolo giorno.</div></section>
@@ -474,20 +471,13 @@ function renderProfile(){const t=T(),c=D.settings?.calc||{peso:'',altezza:'',eta
     ${days.map(d=>`<div class="wk"><div class="v num">${d.n?fmt(d.k):''}</div><div class="b ${d.k>t.kcal*1.08?'o':''}" style="height:${(d.k/max)*120}px"></div><div class="l">${new Date(d.ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'})}</div></div>`).join('')}</div>
     <div class="small muted">Media ${fmt(avg)} kcal sui ${logged.length} giorni registrati · tratteggio = obiettivo</div></section>
    <section class="card"><h2>Collegamento con Salute</h2>
-    <div class="hint">Il pulsante «Sincronizza con Salute» avvia il Comando Rapido qui sotto: scrive in Salute calorie e macro aggiunti dall'ultimo invio e legge le calorie spese oggi dal Fitbit.</div>
+    <div class="hint">«Sincronizza con Salute» manda a Salute le calorie aggiunte dall'ultimo invio, tramite un Comando Rapido. Le calorie spese le inserisci con «kcal spese a mano».</div>
     <label>Nome del Comando Rapido<input id="sc_name" value="${esc(scName())}"></label><button data-act="saveSC">Salva nome</button>
     <details><summary>Come creare il Comando Rapido ›</summary><ol class="small" style="padding-left:1.2em;margin:10px 0 0;display:flex;flex-direction:column;gap:6px">
      <li>Comandi Rapidi → <b>+</b> → rinominalo esattamente <b>${esc(scName())}</b>.</li>
-     <li><b>Ottieni dizionario da</b> → Input comando rapido.</li>
-     <li><b>Ottieni valore dizionario</b> per la chiave <b>when</b> → poi <b>Ottieni date da</b> quel valore. Rinomina la variabile in <i>Quando</i>.</li>
-     <li><b>Ottieni valore dizionario</b> per <b>log</b> → <b>Se</b> il valore <b>è</b> 1:</li>
-     <li style="margin-left:1em">Dentro il «Se», 4 volte: <b>Ottieni valore dizionario</b> (kcal / prot / carb / fat) → <b>Registra campione di salute</b>: Energia alimentare (kcal) · Proteine (g) · Carboidrati (g) · Grassi totali (g); Valore = il valore appena letto; Data = <i>Quando</i>. Chiudi il «Se».</li>
-     <li><b>Trova campioni di salute</b>: Tipo <b>Energia attiva</b>, Data di inizio <b>è oggi</b>, Fonte <b>è Google Health</b>, Raggruppa per <b>Giorno</b> → <b>Ottieni dettagli dei campioni di salute</b>: Valore. Rinomina in <i>Attive</i>.</li>
-     <li>Uguale con <b>Energia a riposo</b> → rinomina in <i>Riposo</i>.</li>
-     <li><b>Trova campioni di salute</b>: Tipo <b>Energia attiva</b>, Data di inizio <b>è oggi</b>, Fonte <b>è Hevy</b> → <b>Conta</b> gli elementi. Rinomina in <i>Hevy</i> (serve a riconoscere i giorni di allenamento).</li>
-     <li>Facoltativo, se una bilancia scrive in Salute: <b>Trova campioni di salute</b>: Tipo <b>Peso corporeo</b>, Ordina per <b>Data di inizio</b>, <b>Dal più recente</b>, Limite <b>1</b> → <b>Ottieni dettagli</b>: Valore. Rinomina in <i>Peso</i>.</li>
-     <li><b>Testo</b>: <span class="num">DMSYNC|</span>[valore dizionario <b>id</b>]<span class="num">|</span>[<i>Attive</i>]<span class="num">|</span>[<i>Riposo</i>]<span class="num">|</span>[<i>Hevy</i>]<span class="num">|</span>[<i>Peso</i>] → <b>Copia negli appunti</b>. Senza bilancia lascia vuoto l'ultimo campo.</li>
-     <li>Primo avvio: concedi a Comandi Rapidi lettura e scrittura in Salute.</li></ol></details></section>
+     <li>Aggiungi una sola azione: <b>Salva campione di dati sanitari</b>.</li>
+     <li>Tipo <b>Apporto calorico</b>; Valore: tocca il campo e scegli la variabile <b>Input comando rapido</b>; unità <b>kcal</b>. La data lasciala com'è (ora attuale).</li>
+     <li>Primo avvio: concedi a Comandi Rapidi di scrivere in Salute.</li></ol></details></section>
    <section class="card"><h2>Backup</h2><div class="hint">I dati stanno solo su questo telefono. Esporta un backup ogni tanto.</div>
     <div class="row"><button data-act="export">Esporta</button><label class="chip" style="cursor:pointer">Importa<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
     <div class="hint">${Object.keys(D.foods).length} alimenti · ${Object.keys(D.days).length} giorni · versione 4</div></section>`}
