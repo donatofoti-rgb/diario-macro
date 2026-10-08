@@ -174,7 +174,7 @@ function healthBlock(t){const h=H(),b=h.burn[S.date],p=h.pending;let out='';
   if(b){const spent=b.active+b.rest,bal=t.kcal-spent;
     out+=`<div class="row between small"><span class="muted">Spese <span class="num">${fmt(spent)}</span> kcal · ${fmt(b.active)} attive + ${fmt(b.rest)} a riposo (ore ${esc(b.at)})</span>
       <span class="num"><b>${bal>=0?'Surplus':'Deficit'} ${fmt(Math.abs(bal))}</b></span></div>`}
-  out+=`<div class="row"><button data-act="hsync">Sincronizza con Salute</button><button class="ghost small" data-act="hburn">kcal spese a mano</button></div>`;
+  out+=`<div class="row"><button data-act="hsync">Sincronizza con Salute</button><button class="ghost small" data-act="hburn">kcal spese a mano</button>${S.date===todayStr()&&h.sent[S.date]?`<button class="ghost small" data-act="hreset">Reinvia oggi da zero</button>`:''}</div>`;
   return out}
 function syncHealth(){if(S.date!==todayStr()){toast('Si invia solo la giornata di oggi');return}
   const h=H(),t=totals(entries()),s=h.sent[S.date]||{},macro=!!D.settings?.sendMacro;const d={};HK.forEach(k=>d[k]=Math.round(t[k]-(s[k]||0)));
@@ -538,6 +538,8 @@ document.body.addEventListener('click',e=>{if(e.target.closest('.veil'))return;
   if(a==='saveTr'){const c=trainCfg();D.settings={...(D.settings||{}),train:{...c,plus:Math.max(0,Math.round(num($('tr_plus').value))),minus:Math.max(0,Math.round(num($('tr_minus').value)))}};save();renderProfile();toast('Salvato')}
   if(a==='saveW'){const w=num($('w_kg').value);if(w<30||w>250){toast('Peso non valido');return}D.weights=D.weights||{};D.weights[todayStr()]=Math.round(w*10)/10;save();renderProfile();toast('Peso salvato')}
   if(a==='applyT'){const e=tdeeEst();if(e.ok){applyTdee(e);renderProfile();toast(`Obiettivo base: ${fmt(e.base)} kcal`)}}
+  if(a==='hreset'){const v=sheet(`<h2>Reinvia oggi da zero</h2><p class="small">Usalo solo dopo aver cancellato in Salute le voci di oggi inviate da Comandi Rapidi (apporto calorico, proteine, carboidrati, grassi). Poi tocca «Sincronizza con Salute» e verrà inviato il totale di oggi.</p><button class="primary" data-x="ok">Ho cancellato, azzera</button><button class="ghost" data-x="close">Annulla</button>`);
+    v.addEventListener('click',ev=>{const x=ev.target.closest('[data-x]')?.dataset.x;if(!x&&ev.target!==v)return;if(x==='ok'){delete H().sent[todayStr()];saveNow();renderSummary();toast('Ora tocca «Sincronizza con Salute»')}v.remove()})}
   if(a==='hsync')syncHealth();
   if(a==='hpaste')pasteHealth();
   if(a==='hburn')manualBurn();
