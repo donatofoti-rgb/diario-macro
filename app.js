@@ -549,7 +549,9 @@ document.body.addEventListener('click',e=>{if(e.target.closest('.veil'))return;
   if(a==='saveSC'){D.settings={...(D.settings||{}),shortcut:$('sc_name').value.trim()||SC_DEF};save();renderProfile();toast('Nome salvato')}
 });
 
-if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol!=='file:'){const had=!!navigator.serviceWorker.controller;let rl=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl){rl=true;saveNow();location.reload()}});
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})})}).catch(()=>{})}
 try{if(D.settings?.autoTdee){const td=todayStr();if(wdIdx(td)===0&&D.settings.tdeeApplied!==td){const e=tdeeEst();if(e.ok&&Math.abs(e.base-T().kcal)>=50){applyTdee(e);setTimeout(()=>toast(`Obiettivo aggiornato: ${fmt(e.base)} kcal`),800)}else D.settings.tdeeApplied=td}}}catch(e){}
 save();renderAll();
 window.DM={parseText,combos,D:()=>D,S,remaining,foods,eanOk,tdeeEst,Tday,planned,trainInfo};
