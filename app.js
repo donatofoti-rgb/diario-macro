@@ -177,12 +177,14 @@ function healthBlock(t){const h=H(),b=h.burn[S.date],p=h.pending;let out='';
   out+=`<div class="row"><button data-act="hsync">Sincronizza con Salute</button><button class="ghost small" data-act="hburn">kcal spese a mano</button></div>`;
   return out}
 function syncHealth(){if(S.date!==todayStr()){toast('Si invia solo la giornata di oggi');return}
-  const h=H(),t=totals(entries()),s=h.sent[S.date]||{};const d=Math.round(t.kcal-(s.kcal||0));
-  if(d<0){const v=sheet(`<h2>Hai tolto alimenti</h2><p class="small">Dopo l'ultimo invio il totale di oggi è sceso di ${fmt(-d)} kcal. Da qui non posso togliere dati da Salute: se vuoi il numero esatto, cancella a mano l'ultima voce in Salute → Nutrizione → Apporto calorico.</p><button class="primary" data-x="close">Ok</button>`);
+  const h=H(),t=totals(entries()),s=h.sent[S.date]||{},macro=!!D.settings?.sendMacro;const d={};HK.forEach(k=>d[k]=Math.round(t[k]-(s[k]||0)));
+  if(d.kcal<0){const v=sheet(`<h2>Hai tolto alimenti</h2><p class="small">Dopo l'ultimo invio il totale di oggi è sceso di ${fmt(-d.kcal)} kcal. Da qui non posso togliere dati da Salute: se vuoi il numero esatto, cancella a mano l'ultima voce in Salute → Nutrizione.</p><button class="primary" data-x="close">Ok</button>`);
     v.addEventListener('click',ev=>{if(ev.target===v||ev.target.closest('[data-x]'))v.remove()});return}
-  if(d===0){toast('Niente di nuovo da inviare');return}
-  h.sent[S.date]={...s,kcal:t.kcal};saveNow();renderSummary();toast(`Invio ${fmt(d)} kcal a Salute`);
-  location.href='shortcuts://run-shortcut?name='+encodeURIComponent(scName())+'&input=text&text='+d}
+  HK.forEach(k=>d[k]=Math.max(0,d[k]));
+  if(!d.kcal&&!(macro&&(d.prot||d.carb||d.fat))){toast('Niente di nuovo da inviare');return}
+  const ns={...s};HK.forEach(k=>{if(d[k]>0||k==='kcal')ns[k]=(s[k]||0)+d[k]});h.sent[S.date]=ns;saveNow();renderSummary();toast(`Invio ${fmt(d.kcal)} kcal a Salute`);
+  const txt=macro?[d.kcal,d.prot,d.carb,d.fat].join('|'):String(d.kcal);
+  location.href='shortcuts://run-shortcut?name='+encodeURIComponent(scName())+'&input=text&text='+encodeURIComponent(txt)}
 async function pasteHealth(){let txt='';try{txt=await navigator.clipboard.readText()}catch(e){toast('Non riesco a leggere gli appunti');return}
   const m=String(txt).match(/DMSYNC\|([^|\n]*)\|([^|\n]*)\|([^|\n]*)(?:\|([^|\n]*))?(?:\|([^|\n]*))?/);if(!m){toast('Negli appunti non ci sono dati di Salute');return}
   const h=H(),[,id,a,r,hv,wt]=m,p=h.pending;const w=pnum(wt);if(w>=30&&w<=250){D.weights=D.weights||{};D.weights[todayStr()]=Math.round(w*10)/10}
@@ -471,12 +473,14 @@ function renderProfile(){const t=T(),c=D.settings?.calc||{peso:'',altezza:'',eta
     ${days.map(d=>`<div class="wk"><div class="v num">${d.n?fmt(d.k):''}</div><div class="b ${d.k>t.kcal*1.08?'o':''}" style="height:${(d.k/max)*120}px"></div><div class="l">${new Date(d.ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'})}</div></div>`).join('')}</div>
     <div class="small muted">Media ${fmt(avg)} kcal sui ${logged.length} giorni registrati · tratteggio = obiettivo</div></section>
    <section class="card"><h2>Collegamento con Salute</h2>
-    <div class="hint">«Sincronizza con Salute» manda a Salute le calorie aggiunte dall'ultimo invio, tramite un Comando Rapido. Le calorie spese le inserisci con «kcal spese a mano».</div>
+    <div class="hint">«Sincronizza con Salute» manda a Salute quanto hai aggiunto dall'ultimo invio, tramite un Comando Rapido. Le calorie spese le inserisci con «kcal spese a mano».</div>
     <label>Nome del Comando Rapido<input id="sc_name" value="${esc(scName())}"></label><button data-act="saveSC">Salva nome</button>
+    <label class="ck small"><input type="checkbox" id="sendMacro" ${D.settings?.sendMacro?'checked':''}> Invia anche proteine, carboidrati e grassi (accendilo solo dopo aver aggiornato il Comando)</label>
     <details><summary>Come creare il Comando Rapido ›</summary><ol class="small" style="padding-left:1.2em;margin:10px 0 0;display:flex;flex-direction:column;gap:6px">
      <li>Comandi Rapidi → <b>+</b> → rinominalo esattamente <b>${esc(scName())}</b>.</li>
-     <li>Aggiungi una sola azione: <b>Salva campione di dati sanitari</b>.</li>
-     <li>Tipo <b>Apporto calorico</b>; Valore: tocca il campo e scegli la variabile <b>Input comando rapido</b>; unità <b>kcal</b>. La data lasciala com'è (ora attuale).</li>
+     ${D.settings?.sendMacro?`<li><b>Dividi testo</b>: Input comando rapido, separatore <b>Personalizzato</b> → <b>|</b></li>
+     <li>4 volte: <b>Ottieni elemento da elenco</b> → <b>Elemento all'indice</b> 1 / 2 / 3 / 4 da <b>Testo diviso</b>; subito sotto <b>Salva campione di dati sanitari</b> con Valore = quell'elemento (tocca il campo → <i>Seleziona variabile</i> → tocca l'azione sopra). Indice 1 Apporto calorico (kcal), 2 Proteine (g), 3 Carboidrati (g), 4 Grassi totali (g).</li>`
+     :`<li>Una sola azione: <b>Salva campione di dati sanitari</b>, Tipo <b>Apporto calorico</b>, Valore <b>Input comando rapido</b> (kcal), Data vuota.</li>`}
      <li>Primo avvio: concedi a Comandi Rapidi di scrivere in Salute.</li></ol></details></section>
    <section class="card"><h2>Backup</h2><div class="hint">I dati stanno solo su questo telefono. Esporta un backup ogni tanto.</div>
     <div class="row"><button data-act="export">Esporta</button><label class="chip" style="cursor:pointer">Importa<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
@@ -507,6 +511,7 @@ window.addEventListener('online',renderResults);window.addEventListener('offline
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(S._today&&S.date===S._today&&S.date!==todayStr())S.date=todayStr();S._today=todayStr();renderAll()}});S._today=todayStr();
 document.body.addEventListener('change',e=>{if(e.target.id==='imp'&&e.target.files?.[0]){importBackup(e.target.files[0]);e.target.value=''}
   if(e.target.id==='tr_on'){D.settings={...(D.settings||{}),train:{...trainCfg(),on:e.target.checked}};save();renderProfile()}
+  if(e.target.id==='sendMacro'){D.settings={...(D.settings||{}),sendMacro:e.target.checked};save();renderProfile();toast(e.target.checked?'Invio macro attivo':'Invio solo calorie')}
   if(e.target.id==='autoT'){D.settings={...(D.settings||{}),autoTdee:e.target.checked};save();toast(e.target.checked?'Aggiornamento automatico attivo':'Aggiornamento automatico spento')}});
 document.body.addEventListener('click',e=>{if(e.target.closest('.veil'))return;
   const pk=e.target.closest('[data-pick]');if(pk){const f=lastRes[pk.dataset.pick]||food(pk.dataset.pick);if(f)openQty(f);return}
