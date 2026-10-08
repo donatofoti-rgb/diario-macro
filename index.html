@@ -18,7 +18,7 @@
 :root{
   --bg:#F2F4EF; --surface:#FFFFFF; --sunk:#E6EAE2; --ink:#172015; --muted:#5E6A5B; --line:#DDE3D8;
   --accent:#2E6A38; --accent-ink:#FFFFFF; --accent-soft:#DCEBD9;
-  --p:#2C68A8; --c:#B97D12; --f:#8B3C7B; --warn:#B0501A; --warn-soft:#F6E2D5;
+  --m1:#C27C0E; --m2:#2F7D4A; --m3:#2D6CB0; --m4:#6A4BA6; --p:#2C68A8; --c:#B97D12; --f:#8B3C7B; --warn:#B0501A; --warn-soft:#F6E2D5;
   --display:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
   --body:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace; color-scheme:light;
@@ -26,7 +26,7 @@
 @media (prefers-color-scheme: dark){:root{
   --bg:#111510; --surface:#1A2019; --sunk:#252D23; --ink:#E5EBE1; --muted:#9AA696; --line:#2D362A;
   --accent:#86C67F; --accent-ink:#0D140C; --accent-soft:#233322;
-  --p:#86B4E8; --c:#E7B64F; --f:#D690C7; --warn:#EE9460; --warn-soft:#3A2519; color-scheme:dark}}
+  --m1:#E6B04F; --m2:#7CC38F; --m3:#86B4E8; --m4:#B49AE6; --p:#86B4E8; --c:#E7B64F; --f:#D690C7; --warn:#EE9460; --warn-soft:#3A2519; color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg)}
 body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;padding-top:env(safe-area-inset-top,0px)}
@@ -96,6 +96,23 @@ details summary{cursor:pointer;color:var(--muted);font-weight:600;list-style:non
 details summary::-webkit-details-marker{display:none}
 .micro{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:12px}
 .micro .t{display:flex;justify-content:space-between;font-size:.8rem}.micro .track{height:5px;margin-top:3px}
+
+/* pasti come schede distinte */
+.meals{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.mealc{--mc:var(--m1);background:color-mix(in srgb,var(--mc) 7%,var(--surface));border:1px solid color-mix(in srgb,var(--mc) 28%,var(--line));border-left:6px solid var(--mc);border-radius:16px;padding:10px 14px 8px;display:flex;flex-direction:column}
+.mealc.m2{--mc:var(--m2)} .mealc.m3{--mc:var(--m3)} .mealc.m4{--mc:var(--m4)}
+.mealc .mh{display:flex;align-items:center;gap:10px;min-height:36px}
+.mealc h3{font-size:1.05rem;text-transform:capitalize;color:var(--mc);flex:1}
+.mealc .mk{font-weight:700}
+.mealc .add{width:34px;height:34px;padding:0;border-radius:50%;border:0;background:var(--mc);color:var(--surface);font-size:1.3rem;line-height:1;font-weight:600;flex:none}
+.mealc .mm{color:var(--muted);margin:-2px 0 4px}
+.mealc .it{border-top-color:color-mix(in srgb,var(--mc) 22%,var(--line))}
+.mealc .mm+.it{border-top:0}
+.mempty{border:1.5px dashed color-mix(in srgb,var(--mc) 45%,var(--line));background:transparent;color:var(--muted);border-radius:12px;padding:.55rem;margin:4px 0 6px;width:100%}
+.adj{color:var(--accent);font-weight:600}.adj.neg{color:var(--warn)}
+label.ck{display:flex;flex-direction:row;align-items:center;gap:10px}
+label.ck input[type=checkbox]{width:22px;height:22px;flex:none;margin:0;accent-color:var(--accent)}
+.wdrow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.wdrow .chip{padding:.45rem 0;text-align:center}
 
 /* fogli */
 .veil{position:fixed;inset:0;background:rgba(10,14,9,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
