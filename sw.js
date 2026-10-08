@@ -1,5 +1,5 @@
-const CACHE='diario-macro-v6';
-const SHELL=['./','index.html','app.js','seed.js','fooddb.json','manifest.webmanifest','vendor/zxing-reader.js','vendor/zxing_reader.wasm','icons/icon-180.png','icons/icon-192.png','icons/icon-512.png'];
+const CACHE='diario-macro-v7';
+const SHELL=['./','index.html','app.js','seed.js','fooddb.json','manifest.webmanifest','zxing-reader.js','zxing_reader.wasm','icons/icon-180.png','icons/icon-192.png','icons/icon-512.png'];
 // install: scarica sempre dalla rete (niente cache HTTP vecchia)
 // un file mancante non deve bloccare l'aggiornamento
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>c.add(new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting())))});
